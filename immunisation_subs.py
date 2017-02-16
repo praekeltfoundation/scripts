@@ -107,9 +107,9 @@ for item in identity_list:
             sys.stdout.write("Subscription creation failed - Identity: %s Error "
                              "code: %s\n" % (identity['identity'],
                                              e.response.status_code))
-        else:
-            sys.stdout.write("Subscription created - Identity: %s" %
-                             identity['identity'])
+            continue
+        sys.stdout.write("Subscription created - Identity: %s" %
+                         identity['identity'])
     else:
         sys.stdout.write("No messages for Identity %s" % identity['identity'])
 sys.stdout.write("Operation complete\n")
