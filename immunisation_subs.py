@@ -49,6 +49,15 @@ sbm_url = args.sbm_url
 sbm_token = args.sbm_token
 messagesets = args.messageset_ids
 
+message_schedules = {}
+for messageset_id in messagesets:
+    try:
+        message_schedules[messageset_id] = get_messageset_schedule(
+            sbm_url, sbm_token, messageset_id)
+    except requests.HTTPError as e:
+        sys.stdout.write("Error retrieving messageset %s: %s" % (messageset_id,
+                         e.response.status_code))
+
 if args.data_file:
     identity_list = args.data_file.readlines()
 elif args.data:
@@ -94,19 +103,13 @@ for item in identity_list:
         elif old_set != 8 or old_msg <= 29:
             messageset_id = messagesets[2]  # send 29 of 8
 
-    try:
-        schedule = get_messageset_schedule(sbm_url, sbm_token, messageset_id)
-    except requests.HTTPError as e:
-        sys.stdout.write("Error retrieving messageset %s: %s" % (messageset_id,
-                         e.response.status_code))
-        continue
     if messageset_id is not None:
         data = {
             'identity': identity['identity'],
             'lang': identity['language'],
             'next_sequence_number': 1,
             'messageset': messageset_id,
-            'schedule': schedule
+            'schedule': message_schedules[messageset_id]
         }
         try:
             create_sub(args.sbm_url, args.sbm_token, data)
