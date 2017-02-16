@@ -17,7 +17,8 @@ def create_sub(url, token, data):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    session.post('%ssubscriptions/' % url, headers=headers, json=data)
+    resp = session.post('%ssubscriptions/' % url, headers=headers, json=data)
+    resp.raise_for_status()
 
 
 def get_messageset_schedule(url, token, messageset_id):
@@ -25,9 +26,10 @@ def get_messageset_schedule(url, token, messageset_id):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    messageset = session.get('%smessageset/%s' % (url, messageset_id),
-                             headers=headers).json()
-    return messageset['default_schedule']
+    resp = session.get('%smessageset/%s' % (url, messageset_id),
+                       headers=headers)
+    resp.raise_for_status()
+    return resp.json()['default_schedule']
 
 
 parser = argparse.ArgumentParser(description='Subscribe users to an '
