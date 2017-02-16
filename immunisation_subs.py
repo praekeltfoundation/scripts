@@ -17,7 +17,7 @@ def create_sub(url, token, data):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    return session.post('%ssubscriptions/' % url, headers=headers, json=data)
+    session.post('%ssubscriptions/' % url, headers=headers, json=data)
 
 
 def get_messageset_schedule(url, token, messageset_id):
@@ -92,20 +92,26 @@ for item in identity_list:
         elif old_set != 8 or old_msg <= 29:
             messageset_id = messagesets[2]  # send 29 of 8
 
+    try:
+        schedule = get_messageset_schedule(sbm_url, sbm_token, messageset_id)
+    except requests.HTTPError as e:
+        sys.stdout.write("Error retrieving messageset %s: %s" % (messageset_id,
+                         e.response.status_code))
+        continue
     if messageset_id is not None:
         data = {
             'identity': identity['identity'],
             'lang': identity['language'],
             'next_sequence_number': 1,
             'messageset': messageset_id,
-            'schedule': get_messageset_schedule(sbm_url, sbm_token,
-                                                messageset_id)
+            'schedule': schedule
         }
-        response = create_sub(args.sbm_url, args.sbm_token, data)
-        if response.status_code != 200 and response.status_code != 201:
+        try:
+            create_sub(args.sbm_url, args.sbm_token, data)
+        except requests.HTTPError as e:
             sys.stdout.write("Subscription creation failed - Identity: %s Error "
                              "code: %s\n" % (identity['identity'],
-                                             response.status_code))
+                                             e.response.status_code))
         else:
             sys.stdout.write("Subscription created - Identity: %s" %
                              identity['identity'])
