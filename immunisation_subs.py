@@ -57,8 +57,8 @@ for messageset_id in messagesets:
         message_schedules[messageset_id] = get_messageset_schedule(
             sbm_url, sbm_token, messageset_id)
     except requests.HTTPError as e:
-        sys.stdout.write("Error retrieving messageset %s: %s" % (messageset_id,
-                         e.response.status_code))
+        sys.exit("Error retrieving messageset %s: %s" % (messageset_id,
+                 e.response.status_code))
 
 if args.data_file:
     identity_list = args.data_file.readlines()
