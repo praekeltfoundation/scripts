@@ -47,6 +47,8 @@ if args.data_file:
     identity_list = args.data_file.readlines()
 elif args.data:
     identity_list = args.data.split("\n")
+else:
+    sys.exit("Either --file or --data argument must be present.")
 
 try:
     messageset_schedule = get_messageset_schedule(sbm_url, sbm_token,
