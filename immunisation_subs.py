@@ -5,13 +5,19 @@ import json
 import requests
 import sys
 
+session = requests.Session()
+http = requests.adapters.HTTPAdapter(max_retries=5)
+https = requests.adapters.HTTPAdapter(max_retries=5)
+session.mount('http://', http)
+session.mount('https://', https)
+
 
 def create_sub(url, token, data):
     headers = {
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    return requests.post('%ssubscriptions/' % url, headers=headers, json=data)
+    return session.post('%ssubscriptions/' % url, headers=headers, json=data)
 
 
 def get_messageset_schedule(url, token, messageset_id):
@@ -19,8 +25,8 @@ def get_messageset_schedule(url, token, messageset_id):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    messageset = requests.get('%smessageset/%s' % (url, messageset_id),
-                              headers=headers).json()
+    messageset = session.get('%smessageset/%s' % (url, messageset_id),
+                             headers=headers).json()
     return messageset['default_schedule']
 
 
