@@ -11,7 +11,8 @@ def create_sub(url, token, data):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    return requests.post('%ssubscriptions/' % url, headers=headers, json=data)
+    resp = requests.post('%ssubscriptions/' % url, headers=headers, json=data)
+    resp.raise_for_status()
 
 
 def get_messageset_schedule(url, token, messageset_id):
@@ -19,9 +20,10 @@ def get_messageset_schedule(url, token, messageset_id):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    messageset = requests.get('%smessageset/%s' % (url, messageset_id),
-                              headers=headers).json()
-    return messageset['default_schedule']
+    resp = requests.get('%smessageset/%s' % (url, messageset_id),
+                        headers=headers)
+    resp.raise_for_status()
+    return resp.json()['default_schedule']
 
 
 parser = argparse.ArgumentParser(description='Subscribe users to a specific '
@@ -46,8 +48,12 @@ if args.data_file:
 elif args.data:
     identity_list = args.data.split("\n")
 
-messageset_schedule = get_messageset_schedule(sbm_url, sbm_token,
-                                              messageset_id)
+try:
+    messageset_schedule = get_messageset_schedule(sbm_url, sbm_token,
+                                                  messageset_id)
+except requests.HTTPError:
+    sys.exit("Problem retrieving the messageset.")
+
 for item in identity_list:
     identity = json.loads(item)
     data = {
@@ -57,9 +63,10 @@ for item in identity_list:
         'messageset': messageset_id,
         'schedule': messageset_schedule
     }
-    response = create_sub(args.sbm_url, args.sbm_token, data)
-    if response.status_code != 200 and response.status_code != 201:
+    try:
+        create_sub(args.sbm_url, args.sbm_token, data)
+    except requests.HTTPError as e:
         sys.stdout.write("Subscription creation failed - Identity: %s Error "
                          "code: %s\n" % (identity['identity'],
-                                         response.status_code))
+                                         e.response.status_code))
 sys.stdout.write("Operation complete\n")
