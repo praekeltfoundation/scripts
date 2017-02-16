@@ -109,8 +109,9 @@ for item in identity_list:
                         messageset_schedule = get_messageset_schedule(
                             sbm_url, sbm_token, data['new'])
                     except requests.HTTPError as e:
-                        sys.exit("Problem retrieving the messageset: %s" %
-                                 e.response.status_code)
+                        sys.exit("Problem retrieving the messageset: %s"
+                                 " on Identity: %s" %
+                                 e.response.status_code, identity['identity'])
                         break
 
                     sub = {
