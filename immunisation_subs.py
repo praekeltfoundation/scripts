@@ -73,34 +73,22 @@ for item in identity_list:
     old_msg = identity['current_sequence_number']
     new_msg = identity['expected_sequence_number']
 
-    # fast-forwarding within set 8
-    if old_set == 8 and new_set == 8:
-        if old_msg <= 29 and new_msg > 29:
+    # new position in set 8
+    if new_set == 8:
+        if new_msg > 29 and (old_set != 8 or old_msg <= 29):
             messageset_id = messagesets[2]  # send 29
-        elif old_msg <= 21 and new_msg > 21:
+        elif new_msg > 21 and (old_set != 8 or old_msg <= 21):
             messageset_id = messagesets[1]  # send 21
-        elif old_msg <= 13 and new_msg > 13:
+        elif new_msg > 13 and (old_set != 8 or old_msg <= 13):
             messageset_id = messagesets[0]  # send 13
-    # fast-forwarding within set 7
-    elif old_set == 7 and new_set == 7:
-        if old_msg <= 36 and new_msg > 36:
-            messageset_id = messagesets[3]  # send 36
-
-    # fast-forwarding to set 8
-    elif old_set != 8 and new_set == 8:
-        if new_msg > 29:
-            messageset_id = messagesets[2]  # send 29
-        elif new_msg > 21:
-            messageset_id = messagesets[1]  # send 21
-        elif new_msg > 13:
-            messageset_id = messagesets[0]  # send 13
-
-    # fast-forwarding to set 7
-    elif old_set != 7 and new_set == 7:
-        if new_msg > 36:
+    # new position in set 7
+    elif new_set == 7:
+        if new_msg > 36 and (old_set != 7 or old_msg <= 36):
             messageset_id = messagesets[3]  # send 36
         # they didn't receive the last message of set 8
-        elif old_set != 8 or old_msg <= 29:
+        elif old_set != 7 and old_set != 8:
+            messageset_id = messagesets[2]  # send 29 of 8
+        elif old_set == 8 and old_msg <= 29:
             messageset_id = messagesets[2]  # send 29 of 8
 
     if messageset_id is not None:
