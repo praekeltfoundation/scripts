@@ -53,6 +53,8 @@ if args.data_file:
     identity_list = args.data_file.readlines()
 elif args.data:
     identity_list = args.data.split("\n")
+else:
+    sys.exit("Either --file or --data argument must be present.")
 
 for item in identity_list:
     messageset_id = None
