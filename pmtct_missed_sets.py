@@ -123,7 +123,6 @@ for item in identity_list:
                     if key == old_set_id and seq > old_seq and not start:
                         start = index
 
-                    print index, key == new_set_id, seq, new_seq
                     if key == new_set_id and seq > new_seq:
                         found_end = True
 
