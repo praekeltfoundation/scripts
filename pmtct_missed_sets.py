@@ -107,30 +107,28 @@ for item in identity_list:
         start = None
         end = None
 
-        found_start = False
-        found_end = False
-
         index = 0
+        # Loop through all sets with important messages
         for key, data in set_details.items():
 
-            if key == old_set_id or start:
-                found_start = True
+            # loop through ALL messages
+            for seq in range(1, 70):
 
-            for seq in data['seq']:
-                index += 1
+                # If message is important, increase the index
+                if seq in data['seq']:
+                    index += 1
 
-                if found_start and not found_end:
-                    if key == old_set_id and seq > old_seq and not start:
-                        start = index
+                # find index where we are starting and ending
+                if (key == old_set_id and seq == old_seq):
+                    start = index + 1
+                if (key == new_set_id and seq == new_seq):
+                    end = index
 
-                    if key == new_set_id and seq > new_seq:
-                        found_end = True
+                    # If the next message is important we don't send it
+                    if seq in data['seq']:
+                        end -= 1
 
-                        break
-                    else:
-                        end = index
-
-        if start and end:
+        if start and end and start <= end:
             messageset_id = new_set_ids[end]
 
             schedule_id = get_messageset_schedule(sbm_url, sbm_token,
@@ -151,7 +149,8 @@ for item in identity_list:
                                   identity['identity'], e.response.status_code)
                                  )
                 continue
-            sys.stdout.write("Subscription created - Identity: %s\n" %
-                             identity['identity'])
+            sys.stdout.write("Subscription created - Identity: %s Set: %s "
+                             "Start: %s\n" % (
+                                identity['identity'], end, start))
 
 sys.stdout.write("Operation complete\n")
