@@ -121,6 +121,9 @@ for item in identity_list:
                 # find index where we are starting and ending
                 if (key == old_set_id and seq == old_seq):
                     start = index + 1
+                    if seq in data['seq']:
+                        start -= 1
+
                 if (key == new_set_id and seq == new_seq):
                     end = index
 
@@ -128,6 +131,7 @@ for item in identity_list:
                     if seq in data['seq']:
                         end -= 1
 
+        print start, end
         if start and end and start <= end:
             messageset_id = new_set_ids[end]
 
