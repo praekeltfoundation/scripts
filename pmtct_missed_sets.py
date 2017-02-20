@@ -7,12 +7,35 @@ import sys
 from collections import OrderedDict
 
 set_details = OrderedDict()
-set_details[3] = {'new': 2, 'seq': [8, 15, 24]}
-set_details[4] = {'new': 6, 'seq': [2]}
-set_details[5] = {'new': 7, 'seq': [5]}
-set_details[1] = {'new': 5, 'seq': [6, 15, 17]}
+set_details[3] = {'seq': [8, 15, 24]}
+set_details[4] = {'seq': [2]}
+set_details[5] = {'seq': [5]}
+set_details[1] = {'seq': [6, 15, 17]}
 
-# TODO replace this with the new message set ids created
+# TODO: this should be updated to the correct ids in Prod
+new_set_ids = {
+    1: 24,
+    2: 25,
+    3: 26,
+    4: 27,
+    5: 28,
+    6: 29,
+    7: 30,
+    8: 31,
+}
+
+# This is what the sets will look like in the data base, we choose the message
+# set based on where we want to end and start at the first important message
+# the subscription missed.
+
+# 1: 8
+# 2: 8, 15
+# 3: 8, 15, 24
+# 4: 8, 15, 24, 2
+# 5: 8, 15, 24, 2, 5
+# 6: 8, 15, 24, 2, 5, 6
+# 7: 8, 15, 24, 2, 5, 6, 15
+# 8: 8, 15, 24, 2, 5, 6, 15, 17
 
 session = requests.Session()
 http = requests.adapters.HTTPAdapter(max_retries=5)
@@ -79,56 +102,57 @@ for item in identity_list:
     old_seq = identity['current_sequence_number']
     new_seq = identity['expected_sequence_number']
 
-    start = False
-
     # if this is a PMTCT message set
     if old_set_id in set_details.keys():
+        start = None
+        end = None
 
-        # loop through the message set
+        found_start = False
+        found_end = False
+
+        index = 0
         for key, data in set_details.items():
 
-            # if we reach the first set of sub or if we have started
             if key == old_set_id or start:
-                start = True
-                start_seq = None
+                found_start = True
 
-                # we loop through important messages
-                for i, val in enumerate(data['seq']):
+            for seq in data['seq']:
+                index += 1
 
-                    # if our current sequence is before a important messages
-                    # and our after sequence is after a important message or
-                    # we have to move to the next set, we know we have to
-                    # subscribe and start at this sequence
-                    if old_seq < val and (new_seq >= val or key != new_set_id):
-                        start_seq = i + 1
+                if found_start and not found_end:
+                    if key == old_set_id and seq > old_seq and not start:
+                        start = index
+
+                    print index, key == new_set_id, seq, new_seq
+                    if key == new_set_id and seq > new_seq:
+                        found_end = True
+
                         break
+                    else:
+                        end = index
 
-                # create subscription with on set data['new'] on start_seq
-                if start_seq:
-                    try:
-                        messageset_schedule = get_messageset_schedule(
-                            sbm_url, sbm_token, data['new'])
-                    except requests.HTTPError as e:
-                        sys.exit("Problem retrieving the messageset: %s"
-                                 " on Identity: %s" %
-                                 e.response.status_code, identity['identity'])
-                        break
+        if start and end:
+            messageset_id = new_set_ids[end]
 
-                    sub = {
-                        'identity': identity['identity'],
-                        'lang': identity['language'],
-                        'next_sequence_number': start_seq,
-                        'messageset': data['new'],
-                        'schedule': messageset_schedule
-                    }
+            schedule_id = get_messageset_schedule(sbm_url, sbm_token,
+                                                  messageset_id)
 
-                    try:
-                        create_sub(args.sbm_url, args.sbm_token, sub)
-                    except requests.HTTPError as e:
-                        sys.stdout.write("Subscription creation failed - "
-                                         "Identity: %s Error code: %s\n" %
-                                         (identity['identity'],
-                                          e.response.status_code))
-
+            data = {
+                'identity': identity['identity'],
+                'lang': identity['language'],
+                'next_sequence_number': start,
+                'messageset': messageset_id,
+                'schedule': schedule_id
+            }
+            try:
+                create_sub(args.sbm_url, args.sbm_token, data)
+            except requests.HTTPError as e:
+                sys.stdout.write("Subscription creation failed - Identity: %s "
+                                 "Error code: %s\n" % (
+                                  identity['identity'], e.response.status_code)
+                                 )
+                continue
+            sys.stdout.write("Subscription created - Identity: %s\n" %
+                             identity['identity'])
 
 sys.stdout.write("Operation complete\n")
