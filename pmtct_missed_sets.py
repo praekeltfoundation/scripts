@@ -107,31 +107,31 @@ for item in identity_list:
         start = None
         end = None
 
-        index = 0
+        imp_msg_index = 0
         # Loop through all sets with important messages
         for key, data in set_details.items():
 
             # loop through ALL messages
             for seq in range(1, 70):
 
-                # If message is important, increase the index
+                # If message is important, increase the imp_msg_index
                 if seq in data['seq']:
-                    index += 1
+                    imp_msg_index += 1
 
-                # find index where we are starting and ending
+                # find imp_msg_index where we are starting and ending
                 if (key == old_set_id and seq == old_seq):
-                    start = index + 1
+                    start = imp_msg_index + 1
+                    # If the next message was important we send it
                     if seq in data['seq']:
                         start -= 1
 
                 if (key == new_set_id and seq == new_seq):
-                    end = index
+                    end = imp_msg_index
 
                     # If the next message is important we don't send it
                     if seq in data['seq']:
                         end -= 1
 
-        print start, end
         if start and end and start <= end:
             messageset_id = new_set_ids[end]
 
