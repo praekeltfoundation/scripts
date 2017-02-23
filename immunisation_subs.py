@@ -21,6 +21,19 @@ def create_sub(url, token, data):
     resp.raise_for_status()
 
 
+def sub_exists(url, token, params):
+    headers = {
+        'Authorization': "Token " + token,
+        'Content-Type': "application/json"
+    }
+    resp = session.get('%ssubscriptions/' % url, headers=headers,
+                       params=params)
+    resp.raise_for_status()
+    if resp.json().get('count') > 0:
+        return True
+    return False
+
+
 def get_messageset_schedule(url, token, messageset_id):
     headers = {
         'Authorization': "Token " + token,
@@ -94,6 +107,20 @@ for item in identity_list:
             messageset_id = messagesets[2]  # send 29 of 8
 
     if messageset_id is not None:
+        try:
+            if sub_exists(args.sbm_url, args.sbm_token,
+                          {'identity': identity['identity'],
+                           'messageset': messageset_id}):
+                sys.stdout.write("Subscription creation skipped - Identity: "
+                                 "%s already subscribed to messageset %s\n" %
+                                 (identity['identity'], messageset_id))
+                continue
+        except requests.HTTPError as e:
+            sys.stdout.write("Problem retrieving existing subscriptions - "
+                             "Identity: %s Error code: %s\n" %
+                             (identity['identity'], e.response.status_code))
+            continue
+
         data = {
             'identity': identity['identity'],
             'lang': identity['language'],
