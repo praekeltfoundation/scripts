@@ -80,6 +80,7 @@ elif args.data:
 else:
     sys.exit("Either --file or --data argument must be present.")
 
+count = 0
 for item in identity_list:
     messageset_id = None
     identity = json.loads(item)
@@ -130,6 +131,7 @@ for item in identity_list:
         }
         try:
             create_sub(args.sbm_url, args.sbm_token, data)
+            count += 1
         except requests.HTTPError as e:
             sys.stdout.write("Subscription creation failed - Identity: %s Error "
                              "code: %s\n" % (identity['identity'],
@@ -139,4 +141,4 @@ for item in identity_list:
                          identity['identity'])
     else:
         sys.stdout.write("No messages for Identity %s\n" % identity['identity'])
-sys.stdout.write("Operation complete\n")
+sys.stdout.write("Operation complete. %s Subscriptions created.\n" % count)
