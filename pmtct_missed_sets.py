@@ -11,20 +11,22 @@ set_details[3] = {'seq': [8, 15, 24]}
 set_details[4] = {'seq': [2]}
 set_details[5] = {'seq': [5]}
 set_details[1] = {'seq': [6, 15, 17]}
+# This needs to be here to find the end if the subscription has gone past set 1
+set_details[2] = {'seq': []}
 
 # TODO: this should be updated to the correct ids in Prod
 new_set_ids = {
-    1: 24,
-    2: 25,
-    3: 26,
-    4: 27,
-    5: 28,
-    6: 29,
-    7: 30,
-    8: 31,
+    1: 25,
+    2: 26,
+    3: 27,
+    4: 28,
+    5: 29,
+    6: 30,
+    7: 31,
+    8: 32,
 }
 
-# This is what the sets will look like in the data base, we choose the message
+# This is what the sets will look like in the database, we choose the message
 # set based on where we want to end and start at the first important message
 # the subscription missed.
 
