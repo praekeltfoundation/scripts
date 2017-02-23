@@ -75,6 +75,7 @@ try:
 except requests.HTTPError as e:
     sys.exit("Problem retrieving the messageset: %s" % e.response.status_code)
 
+count = 0
 for item in identity_list:
     identity = json.loads(item)
 
@@ -100,8 +101,9 @@ for item in identity_list:
     }
     try:
         create_sub(args.sbm_url, args.sbm_token, data)
+        count += 1
     except requests.HTTPError as e:
         sys.stdout.write("Subscription creation failed - Identity: %s Error "
                          "code: %s\n" % (identity['identity'],
                                          e.response.status_code))
-sys.stdout.write("Operation complete\n")
+sys.stdout.write("Operation complete. %s Subscriptions created.\n" % count)
