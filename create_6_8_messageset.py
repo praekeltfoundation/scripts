@@ -4,9 +4,10 @@ import argparse
 import requests
 import urllib
 import datetime
+import csv
 
 IMPORT_DIR = "import_files"
-DOWNLOAD = False
+DOWNLOAD = True
 CREATE = True
 
 parser = argparse.ArgumentParser(description='create 6-8pm message sets.')
@@ -80,22 +81,23 @@ opener = urllib.URLopener()
 
 for messageset in sets:
     name = messageset['short_name']
-    if name.find("audio") != -1 and name.find("9_11") != -1:
-        new_name = name.replace("9_11", "6_8")
+    if name.find("audio") != -1 and name.find("2_5") != -1:
+        new_name = name.replace("2_5", "6_8")
 
         f = open('%s/%s.csv' % (IMPORT_DIR, new_name), 'w')
-        f.write(
-            "messageset,sequence_number,lang,text_content,binary_content\n")
+        writer = csv.writer(f)
+        writer.writerow([
+            "messageset", "sequence_number", "lang", "text_content",
+            "binary_content"])
 
         new_id = 0
         if CREATE:
-            # TODO: correct schedule_id
-            # TODO: next set ?? - maybe just update these two manually
-
+            # default_schedule will have to be updated manually
             new_set = {
                 'short_name': new_name,
                 'default_schedule': messageset['default_schedule'],
                 'content_type': messageset['content_type'],
+                'next_set': messageset['next_set'],
             }
 
             if "channel" in messageset:
@@ -112,16 +114,11 @@ for messageset in sets:
                     message['binary_content']['content'],
                     '%s/%s' % (IMPORT_DIR, filename))
 
-            line = '%s,%s,%s,%s,%s' % (
+            writer.writerow([
                 new_id,
                 message['sequence_number'],
                 message['lang'],
-                message['text_content'].replace(',', ''),
-                filename)
-
-            f.write('%s\n' % line)
-            # break
+                message['text_content'],
+                filename])
 
         f.close()
-
-        # break
