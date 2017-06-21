@@ -34,14 +34,18 @@ def sub_exists(url, token, params):
 
 
 def get_subs(url, token, params):
-    headers = {
-        'Authorization': "Token " + token,
-        'Content-Type': "application/json"
-    }
-    resp = session.get('%ssubscriptions/' % url, headers=headers,
-                       params=params)
-    resp.raise_for_status()
-    return resp.json().get('results')
+    results = []
+    next_url = '%ssubscriptions/' % url
+    while next_url != "":
+        headers = {
+            'Authorization': "Token " + token,
+            'Content-Type': "application/json"
+        }
+        resp = session.get(next_url, headers=headers, params=params)
+        resp.raise_for_status()
+        results.extend(resp.json().get('results'))
+        next_url = resp.json().get('next')
+    return results
 
 
 def get_messageset_schedule(url, token, messageset_id):
