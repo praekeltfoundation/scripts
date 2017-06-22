@@ -35,7 +35,7 @@ def sub_exists(url, token, params):
 
 def get_subs(url, token, params):
     next_url = '%ssubscriptions/' % url
-    while next_url != "":
+    while next_url is not None:
         headers = {
             'Authorization': "Token " + token,
             'Content-Type': "application/json"
@@ -63,12 +63,10 @@ def get_identity(url, token, identity_id):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    resp = session.get('%sidentity/%s' % (url, identity_id),
+    resp = session.get('%sidentities/%s' % (url, identity_id),
                        headers=headers)
     resp.raise_for_status()
-    if resp.status_code == 404:
-        return False
-    return True
+    return resp.json()
 
 
 parser = argparse.ArgumentParser(description='Re-subscribe expired '
@@ -98,7 +96,8 @@ try:
     messageset_schedule = get_messageset_schedule(sbm_url, sbm_token,
                                                   new_messageset)
 except requests.HTTPError as e:
-    sys.exit("Problem retrieving the messageset: %s" % e.response.status_code)
+    sys.exit("Problem retrieving messageset %s: %s" % (new_messageset,
+                                                       e.response.status_code))
 
 # get all nurseconnect subscriptions that have lapsed
 subscriptions = get_subs(sbm_url, sbm_token, {"messageset": old_messageset,
@@ -137,8 +136,8 @@ for sub in subscriptions:
         continue
 
     data = {
-        'identity': identity['identity'],
-        'lang': identity['lang_code'],
+        'identity': identity['id'],
+        'lang': 'eng_ZA',
         'next_sequence_number': 1,
         'messageset': new_messageset,
         'schedule': messageset_schedule
