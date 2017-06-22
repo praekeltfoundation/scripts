@@ -34,7 +34,6 @@ def sub_exists(url, token, params):
 
 
 def get_subs(url, token, params):
-    results = []
     next_url = '%ssubscriptions/' % url
     while next_url != "":
         headers = {
@@ -43,9 +42,9 @@ def get_subs(url, token, params):
         }
         resp = session.get(next_url, headers=headers, params=params)
         resp.raise_for_status()
-        results.extend(resp.json().get('results'))
+        for result in resp.json().get('results'):
+            yield result
         next_url = resp.json().get('next')
-    return results
 
 
 def get_messageset_schedule(url, token, messageset_id):
