@@ -125,7 +125,7 @@ for sub in subscriptions:
 
         # check they haven't opted out
         identity = get_identity(is_url, is_token, sub['identity'])
-        msisdns = identity['details']['addresses']['msisdn']
+        msisdns = identity['details'].get('addresses', {}).get('msisdn', {})
         if all(msisdn.get('optedout') for _, msisdn in msisdns.items()):
             sys.stdout.write("Subscription creation skipped - Identity: %s "
                              "optedout\n" % (sub['identity']))
