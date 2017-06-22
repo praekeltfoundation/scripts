@@ -138,7 +138,7 @@ for sub in subscriptions:
 
     data = {
         'identity': identity['identity'],
-        'lang': identity['language'],
+        'lang': identity['lang_code'],
         'next_sequence_number': 1,
         'messageset': new_messageset,
         'schedule': messageset_schedule
