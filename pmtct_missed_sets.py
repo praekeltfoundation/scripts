@@ -54,11 +54,11 @@ def create_sub(url, token, data):
         'Content-Type': "application/json"
     }
 
-    r = session.post('%ssubscriptions/' % url, data=json.dumps(data),
-                     headers=headers)
-
-    r.raise_for_status()
-    return r
+    if execute:
+        r = session.post(
+            '%ssubscriptions/' % url, data=json.dumps(data), headers=headers)
+        r.raise_for_status()
+        return r
 
 
 def get_messageset_schedule(url, token, messageset_id):
@@ -86,10 +86,20 @@ parser.add_argument('--sbm-token', required=True,
 parser.add_argument('--file', dest='data_file', type=argparse.FileType('r'),
                     help='Name of file containing the list of identities.')
 parser.add_argument('--data', help='List of identities. One per line.')
+parser.add_argument(
+    '--execute', default=False, action='store_const', const=True,
+    help='Execute the changes, rather than just doing a dry run'
+)
 
 args = parser.parse_args()
 sbm_url = args.sbm_url
 sbm_token = args.sbm_token
+execute = args.execute
+
+if not execute:
+    sys.stdout.write(
+        "Dry run mode. If you want the actions to be executed, use --execute"
+        "\n")
 
 if args.data_file:
     identity_list = args.data_file.readlines()
@@ -155,8 +165,11 @@ for item in identity_list:
                                   identity['identity'], e.response.status_code)
                                  )
                 continue
-            sys.stdout.write("Subscription created - Identity: %s Set: %s "
-                             "Start: %s\n" % (
-                                identity['identity'], end, start))
+            sys.stdout.write(json.dumps({
+                "identity": identity["identity"],
+                "messageset": messageset_id,
+                "start": start,
+            }))
+            sys.stdout.write("\n")
 
 sys.stdout.write("Operation complete\n")
