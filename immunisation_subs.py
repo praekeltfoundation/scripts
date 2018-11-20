@@ -78,6 +78,9 @@ if not execute:
         "Dry run mode. If you want the actions to be executed, use --execute"
         "\n")
 
+POSTBIRTH_1_MESSAGESETS = [8, 42]
+POSTBIRTH_2_MESSAGESETS = [7, 43]
+
 message_schedules = {}
 for messageset_id in messagesets:
     try:
@@ -104,21 +107,25 @@ for item in identity_list:
     new_msg = identity['expected_sequence_number']
 
     # new position in set 8
-    if new_set == 8:
-        if new_msg > 29 and (old_set != 8 or old_msg <= 29):
+    if new_set in POSTBIRTH_1_MESSAGESETS:
+        if new_msg > 29 and (
+                old_set not in POSTBIRTH_1_MESSAGESETS or old_msg <= 29):
             messageset_id = messagesets[2]  # send 29
-        elif new_msg > 21 and (old_set != 8 or old_msg <= 21):
+        elif new_msg > 21 and (
+                old_set not in POSTBIRTH_1_MESSAGESETS or old_msg <= 21):
             messageset_id = messagesets[1]  # send 21
-        elif new_msg > 13 and (old_set != 8 or old_msg <= 13):
+        elif new_msg > 13 and (
+                old_set not in POSTBIRTH_1_MESSAGESETS or old_msg <= 13):
             messageset_id = messagesets[0]  # send 13
     # new position in set 7
-    elif new_set == 7:
-        if new_msg > 36 and (old_set != 7 or old_msg <= 36):
+    elif new_set in POSTBIRTH_2_MESSAGESETS:
+        if new_msg > 36 and (
+                old_set in POSTBIRTH_2_MESSAGESETS or old_msg <= 36):
             messageset_id = messagesets[3]  # send 36
         # they didn't receive the last message of set 8
-        elif old_set != 7 and old_set != 8:
+        elif old_set not in POSTBIRTH_2_MESSAGESETS and old_set != 8:
             messageset_id = messagesets[2]  # send 29 of 8
-        elif old_set == 8 and old_msg <= 29:
+        elif old_set in POSTBIRTH_1_MESSAGESETS and old_msg <= 29:
             messageset_id = messagesets[2]  # send 29 of 8
 
     if messageset_id is None:

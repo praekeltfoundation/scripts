@@ -7,12 +7,21 @@ import sys
 from collections import OrderedDict
 
 set_details = OrderedDict()
-set_details[3] = {'seq': [8, 15, 24]}
-set_details[4] = {'seq': [2]}
-set_details[5] = {'seq': [5]}
-set_details[1] = {'seq': [6, 15, 17]}
+set_details[3] = {'seq': [8, 15, 24]}  # pmtct_prebirth.patient.1
+set_details[4] = {'seq': [2]}  # pmtct_prebirth.patient.2
+set_details[5] = {'seq': [5]}  # pmtct_prebirth.patient.3
+set_details[1] = {'seq': [6, 15, 17]}  # pmtct_postbirth.patient.1
 # This needs to be here to find the end if the subscription has gone past set 1
-set_details[2] = {'seq': []}
+set_details[2] = {'seq': []}  # pmtct_postbirth.patient.2
+
+# Mapping for whatsapp messagesets
+alternate_messagesets = {
+    46: 3,  # whatsapp_pmtct_prebirth.patient.1
+    47: 4,  # whatsapp_pmtct_prebirth.patient.2
+    48: 5,  # whatsapp_pmtct_prebirth.patient.3
+    49: 1,  # whatsapp_pmtct_postbirth.patient.1
+    50: 2,  # whatsapp_pmtct_postbirth.patient.2
+}
 
 # TODO: this should be updated to the correct ids in Prod
 new_set_ids = {
@@ -110,7 +119,9 @@ for item in identity_list:
     identity = json.loads(item)
 
     old_set_id = identity['current_messageset_id']
+    old_set_id = alternate_messagesets.get(old_set_id, old_set_id)
     new_set_id = identity['expected_messageset_id']
+    new_set_id = alternate_messagesets.get(new_set_id, new_set_id)
     old_seq = identity['current_sequence_number']
     new_seq = identity['expected_sequence_number']
 
