@@ -17,8 +17,10 @@ def create_sub(url, token, data):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    resp = session.post('%ssubscriptions/' % url, headers=headers, json=data)
-    resp.raise_for_status()
+    if execute:
+        resp = session.post(
+            '%ssubscriptions/' % url, headers=headers, json=data)
+        resp.raise_for_status()
 
 
 def sub_exists(url, token, params):
@@ -26,11 +28,12 @@ def sub_exists(url, token, params):
         'Authorization': "Token " + token,
         'Content-Type': "application/json"
     }
-    resp = session.get('%ssubscriptions/' % url, headers=headers,
-                       params=params)
-    resp.raise_for_status()
-    if resp.json().get('count') > 0:
-        return True
+    if execute:
+        resp = session.get(
+            '%ssubscriptions/' % url, headers=headers, params=params)
+        resp.raise_for_status()
+        if resp.json().get('count') > 0:
+            return True
     return False
 
 
@@ -58,11 +61,22 @@ parser.add_argument('--messageset-ids', type=int, nargs=4, required=True,
 parser.add_argument('--file', dest='data_file', type=argparse.FileType('r'),
                     help='Name of file containing the list of identities.')
 parser.add_argument('--data', help='List of identities. One per line.')
+parser.add_argument(
+    '--execute', default=False, action='store_const', const=True,
+    help='Execute the changes, rather than just doing a dry run'
+)
+
 
 args = parser.parse_args()
 sbm_url = args.sbm_url
 sbm_token = args.sbm_token
 messagesets = args.messageset_ids
+execute = args.execute
+
+if not execute:
+    sys.stdout.write(
+        "Dry run mode. If you want the actions to be executed, use --execute"
+        "\n")
 
 message_schedules = {}
 for messageset_id in messagesets:
@@ -107,38 +121,46 @@ for item in identity_list:
         elif old_set == 8 and old_msg <= 29:
             messageset_id = messagesets[2]  # send 29 of 8
 
-    if messageset_id is not None:
-        try:
-            if sub_exists(args.sbm_url, args.sbm_token,
-                          {'identity': identity['identity'],
-                           'messageset': messageset_id}):
-                sys.stdout.write("Subscription creation skipped - Identity: "
-                                 "%s already subscribed to messageset %s\n" %
-                                 (identity['identity'], messageset_id))
-                continue
-        except requests.HTTPError as e:
-            sys.stdout.write("Problem retrieving existing subscriptions - "
-                             "Identity: %s Error code: %s\n" %
-                             (identity['identity'], e.response.status_code))
+    if messageset_id is None:
+        continue
+    try:
+        if sub_exists(
+                args.sbm_url, args.sbm_token, {
+                    'identity': identity['identity'],
+                    'messageset': messageset_id}):
+            sys.stdout.write(
+                "Subscription creation skipped - Identity: %s already "
+                "subscribed to messageset %s\n" % (
+                    identity['identity'], messageset_id))
             continue
+    except requests.HTTPError as e:
+        sys.stdout.write(
+            "Problem retrieving existing subscriptions - Identity: %s Error "
+            "code: %s\n" % (identity['identity'], e.response.status_code))
+        continue
 
-        data = {
-            'identity': identity['identity'],
-            'lang': identity['language'],
-            'next_sequence_number': 1,
-            'messageset': messageset_id,
-            'schedule': message_schedules[messageset_id]
-        }
-        try:
-            create_sub(args.sbm_url, args.sbm_token, data)
-            count += 1
-        except requests.HTTPError as e:
-            sys.stdout.write("Subscription creation failed - Identity: %s Error "
-                             "code: %s\n" % (identity['identity'],
-                                             e.response.status_code))
-            continue
-        sys.stdout.write("Subscription created - Identity: %s\n" %
-                         identity['identity'])
-    else:
-        sys.stdout.write("No messages for Identity %s\n" % identity['identity'])
+    data = {
+        'identity': identity['identity'],
+        'lang': identity['language'],
+        'next_sequence_number': 1,
+        'messageset': messageset_id,
+        'schedule': message_schedules[messageset_id]
+    }
+    try:
+        create_sub(args.sbm_url, args.sbm_token, data)
+        count += 1
+    except requests.HTTPError as e:
+        sys.stdout.write(
+            "Subscription creation failed - Identity: %s Error code: %s\n" % (
+                identity['identity'],
+                e.response.status_code
+            )
+        )
+        continue
+    sys.stdout.write(json.dumps({
+        "identity": identity["identity"],
+        "messageset": messageset_id
+    }))
+    sys.stdout.write("\n")
+
 sys.stdout.write("Operation complete. %s Subscriptions created.\n" % count)
